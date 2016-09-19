@@ -2,7 +2,7 @@
   "development": {
     "username": "username",
     "password": "password",
-    "database": "fitnessTrackerTestDB",
+    "database": "hobo_fitness_dev",
     "host": "localhost",
     "dialect": "postgres"
   },
