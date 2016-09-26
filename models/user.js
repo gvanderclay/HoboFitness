@@ -1,7 +1,29 @@
 const bcrypt = require('bcrypt-nodejs');
+const Routine = require('./index').Routine;
 
 const SALT_WORK_FACTOR = 10;
 
+/**
+ * User: A user of the app
+ *  username: username for the user
+ *    Required
+ *  email: email for the user
+ *    Not Required
+ *  firstname: First name of the user
+ *    Required
+ *  lastname: Last name of the user
+ *    Not Required
+ *  password: password for the user
+ *    gets hashed using bcrypt before being submitted.
+ *    Required
+ *  createdAt: date the suser was created
+ *  age: age of the user
+ *    Not Required
+ *  weight: weight of the user
+ *    Not Required
+ *  height: height of the user
+ *    Not Required
+ */
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     username: DataTypes.STRING,
@@ -11,7 +33,13 @@ module.exports = (sequelize, DataTypes) => {
     password: DataTypes.STRING,
   }, {
     classMethods: {
-
+      associate(models) {
+        User.hasMany(models.Routine, {
+          foreignKey: {
+            allowNull: false,
+          },
+        });
+      },
     },
     instanceMethods: {
       verifyPassword(password, cb) {
@@ -30,5 +58,6 @@ module.exports = (sequelize, DataTypes) => {
       });
     });
   });
+
   return User;
 };

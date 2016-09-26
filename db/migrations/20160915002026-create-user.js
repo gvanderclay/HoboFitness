@@ -20,6 +20,7 @@ module.exports = {
         validate: {
           isEmail: true,
         },
+        unique: true,
       },
       firstname: {
         type: Sequelize.STRING,
@@ -45,7 +46,7 @@ module.exports = {
       },
     });
   },
-  down(queryInterface, Sequelize) {
+  down(queryInterface) {
     return queryInterface.dropTable('Users');
   },
 };
