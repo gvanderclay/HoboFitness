@@ -1,34 +1,48 @@
-const bcrypt = require('bcrypt-nodejs');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
-const SALT_WORK_FACTOR = 10;
+const Schema = mongoose.Schema;
 
-module.exports = (sequelize, DataTypes) => {
-  const User = sequelize.define('User', {
-    username: DataTypes.STRING,
-    email: DataTypes.STRING,
-    firstname: DataTypes.STRING,
-    lastname: DataTypes.STRING,
-    password: DataTypes.STRING,
-  }, {
-    classMethods: {
+const UserSchema = new Schema({
+  username: {
+    type: String,
+    unique: true,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+});
 
-    },
-    instanceMethods: {
-      verifyPassword(password, cb) {
-        bcrypt.compare(password, this.password, (err, isMatch) => {
-          if (err) cb(err);
-          return cb(null, isMatch);
-        });
-      },
-    },
-  });
-  User.hook('beforeCreate', (user, options, fn) => {
-    bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
-      bcrypt.hash(user.password, salt, null, (err, hash) => {
+UserSchema.pre('save', function (next) {
+  const user = this;
+  if (this.isModified('password') || this.isNew) {
+    bcrypt.genSalt(10, (err, salt) => {
+      if (err) {
+        return next(err);
+      }
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        if (err) {
+          return next(err);
+        }
         user.password = hash;
-        return fn(null, user);
+        next();
       });
     });
+  } else {
+    return next();
+  }
+});
+
+
+UserSchema.methods.comparePassword = function (passw, cb) {
+  bcrypt.compare(passw, this.password, (err, isMatch) => {
+    if (err) {
+      return cb(err);
+    }
+    cb(null, isMatch);
   });
-  return User;
 };
+
+module.exports = mongoose.model('User', UserSchema);

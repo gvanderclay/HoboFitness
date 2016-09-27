@@ -1,27 +1,70 @@
-const User = require('../models').User;
-const router = require('express').Router();
+const express = require('express');
+const User = require('../models/user');
+const jwt = require('jwt-simple');
+const config = require('../config/database');
+const getToken = require('../lib/token').getToken;
 
-module.exports = (auth) => {
-  /* GET users listing.*/
-  router.get('/', auth, (req, res) => {
-    User.findAll({}).then((users) => {
-      res.json(users);
-    });
-  });
+const router = express.Router();
 
-  router.post('/', (req, res) => {
-    User.create({
+router.post('/new', (req, res) => {
+  if (!req.body.username || !req.body.password) {
+    res.json({ success: false, msg: 'Please pass name and password' });
+  } else {
+    const newUser = new User({
       username: req.body.username,
-      email: req.body.email,
       password: req.body.password,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
-    }).then(() => {
-      res.send('User created successfully');
-    }).catch((err) => {
-      res.status(400).json(err.errors);
     });
-  });
+    newUser.save((err) => {
+      if (err) {
+        return res.json({ success: false, msg: 'Username already exists.' });
+      }
+      res.json({ success: true, msg: 'Successful created new user.' });
+    });
+  }
+});
 
-  return router;
-};
+router.post('/authenticate', (req, res) => {
+  User.findOne({
+    username: req.body.username,
+  }, (err, user) => {
+    if (err) throw err;
+
+    if (!user) {
+      res.send({ success: false, msg: 'Authentication failed. User not found' });
+    } else {
+    // check if password matches
+      user.comparePassword(req.body.password, (err, isMatch) => {
+        console.log(err, isMatch);
+        if (isMatch && !err) {
+        // if user is found and password is right, creata a toekn
+          const token = jwt.encode(user, config.secret);
+        // return the information including token as json
+          res.json({ success: true, token: `JWT ${token}` });
+        } else {
+          res.send({ success: false, msg: 'Authentication failed. Wrong password.' });
+        }
+      });
+    }
+  });
+});
+
+router.post('/userinfo', (req, res) => {
+  const token = getToken(req.headers);
+  if (token) {
+    const decoded = jwt.decode(token, config.secret);
+    User.findOne({
+      name: decoded.name,
+    }, (err, user) => {
+      if (err) throw err;
+
+      if (!user) {
+        return res.status(403).send({ success: false, msg: 'Authentication User not found. ' });
+      }
+      return res.json({ success: true, user: JSON.stringify(user) });
+    });
+  } else {
+    return res.status(403).send({ success: false, msg: 'No token provided.' });
+  }
+});
+
+module.exports = router;

@@ -1,27 +1,23 @@
-const _ = require('lodash');
-const passport = require('passport');
-const BasicStrategy = require('passport-http').BasicStrategy;
-const User = require('../models').User;
+const JwtStrategy = require('passport-jwt').Strategy;
+const ExtractJwt = require('passport-jwt').ExtractJwt;
 
-passport.use(new BasicStrategy(
-  (username, password, callback) => {
-    User.findOne({ where: { username } }).then((user) => {
-      if (_.isEmpty(user)) {
-        return callback(null, false);
+// load up the user model
+const User = require('../models/user');
+const config = require('../config/database');
+
+module.exports = (passport) => {
+  const opts = {};
+  opts.jwtFromRequest = ExtractJwt.fromAuthHeader();
+  opts.secretOrKey = config.secret;
+  passport.use(new JwtStrategy(opts, (jwtPayload, done) => {
+    User.findOne({ id: jwtPayload.id }, (err, user) => {
+      if (err) {
+        return done(err, false);
       }
-      user.verifyPassword(password, (err, isMatch) => {
-        if (err || !isMatch) {
-          return callback(err);
-        }
-        if (!isMatch) {
-          return callback(null, false);
-        }
-
-        // Success
-        return callback(null, user);
-      });
-    }).catch(err => callback(err));
-  }
-));
-
-module.exports.isAuthenticated = passport.authenticate('basic', { session: false });
+      if (user) {
+        return done(null, user);
+      }
+      return done(null, false);
+    });
+  }));
+};

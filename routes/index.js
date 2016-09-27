@@ -1,11 +1,10 @@
-const router = require('express').Router();
+const express = require('express');
 
-module.exports = () => {
-  /* GET home page. */
-  router.get('/', (req, res, next) => {
-    res.send('HELLO');
-    next();
-  });
+const router = express.Router();
 
-  return router;
-};
+
+router.get('/', (req, res, next) => {
+  res.json({ title: 'Express' });
+});
+
+module.exports = router;

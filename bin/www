@@ -5,8 +5,10 @@
  */
 
 var app = require('../app');
-var debug = require('debug')('fitnesstracker:server');
+var debug = require('debug')('HoboFitness:server');
 var http = require('http');
+var mongoose = require('mongoose');
+var db = require('../config/database')
 
 /**
  * Get port from environment and store in Express.
@@ -14,6 +16,12 @@ var http = require('http');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
+
+/**
+ * Connect to our mongoDB database
+ */
+mongoose.connect(db.database);
+
 
 /**
  * Create HTTP server.

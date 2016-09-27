@@ -7,8 +7,6 @@ const bodyParser = require('body-parser');
 const routes = require('./routes/index');
 const users = require('./routes/users');
 
-const auth = require('./config/passport').isAuthenticated;
-
 const app = express();
 
 app.use(logger('dev'));
@@ -17,8 +15,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes(auth));
-app.use('/users', users(auth));
+
+app.use('/', routes);
+app.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -32,23 +31,22 @@ app.use((req, res, next) => {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use((err, req, res) => {
-    res.statusCode = err.status || 500;
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500);
     res.json({
-      error: {
-        message: err.message,
-        error: err,
-      },
+      message: err.message,
+      error: err,
     });
   });
 }
 
 // production error handler
 // no stacktraces leaked to user
-app.use((err, req, res) => {
-  res.statusCode = err.status || 500;
+app.use((err, req, res, next) => {
+  res.status(err.status || 500);
   res.json({
-    error: err.message,
+    message: err.message,
+    error: {},
   });
 });
 
