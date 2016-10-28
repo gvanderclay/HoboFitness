@@ -12,7 +12,7 @@ router.post('/new', (req, res) => {
   } else {
     const newUser = new User({
       username: req.body.username,
-      password: req.body.password,
+      password: req.body.password
     });
     newUser.save((err) => {
       if (err) {
@@ -25,7 +25,7 @@ router.post('/new', (req, res) => {
 
 router.post('/authenticate', (req, res) => {
   User.findOne({
-    username: req.body.username,
+    username: req.body.username
   }, (err, user) => {
     if (err) throw err;
 
@@ -48,12 +48,12 @@ router.post('/authenticate', (req, res) => {
   });
 });
 
-router.post('/userinfo', (req, res) => {
+router.get('/userinfo', (req, res) => {
   const token = getToken(req.headers);
   if (token) {
     const decoded = jwt.decode(token, config.secret);
     User.findOne({
-      name: decoded.name,
+      username: decoded.username
     }, (err, user) => {
       if (err) throw err;
 
